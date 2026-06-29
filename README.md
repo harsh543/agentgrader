@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AgentGrader
 
-## Getting Started
+**The Lighthouse score for AI agent tools.**
 
-First, run the development server:
+AgentGrader grades an MCP (Model Context Protocol) tool's JSON schema for quality and shows the result as an animated scorecard — so you can ship agent tools that models actually use correctly.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+🔗 **Live demo:** https://agentgrader.vercel.app
+
+---
+
+## What it does
+
+Paste an MCP tool JSON schema (or an MCP server URL) and get an instant quality grade across four axes:
+
+| Axis | What it checks |
+| --- | --- |
+| **Purpose** | Clear, single-responsibility description |
+| **Guidelines** | Tells the model *when* and *when not* to call |
+| **Parameter Coverage** | Exposes the right fields with sensible types |
+| **Argument Grounding** 🆕 | Whether arguments have provenance guidance — so the model can't fabricate IDs |
+
+Each grade comes with:
+- An animated **radial gauge** (0→100, color-coded green / amber / red)
+- Per-axis **progress bars + verdict pills** (pass / partial / flag)
+- A **Before/After suggested fix** diff
+- **Similar tools** found via vector similarity (pgvector on Amazon Aurora PostgreSQL)
+- A **score-over-time** sparkline
+
+## Stack
+
+- **Next.js 16** (App Router) + **TypeScript**
+- **Tailwind CSS v4** + shadcn-style UI primitives
+- **Framer Motion** (staggered reveals, count-up gauge)
+- **Recharts** (radial gauge + sparkline)
+- **lucide-react** icons
+- Deployed on **Vercel**
+
+## Architecture
+
+All grading flows through a single async function so the demo mock can be swapped for a real backend in one line:
+
+```ts
+// src/lib/grade.ts
+export async function gradeTool(input: string): Promise<ToolGrade> {
+  // TODO: replace with fetch('/api/grade')
+  await new Promise((r) => setTimeout(r, 2500));
+  return MOCK_GRADE;
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The entire right-pane UI (streaming skeleton → revealed scorecard) is driven off that single promise via React `<Suspense>` + `use()`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Run locally
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev      # http://localhost:3000
+```
 
-## Learn More
+## Deploy
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+vercel --prod
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built for demo. Mock data lives in `src/lib/grade.ts`.
